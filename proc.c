@@ -229,12 +229,25 @@ int clone(void(*function)(void *, void *), void *arg1, void *arg2, void *stack){
   if((proc_thread = allocproc()) == 0){
     return -1;
   }
-
+    
   proc_thread->ustack = (char *)stack;
   proc_thread->pgdir = proc_parent->pgdir;
   proc_thread->parent = proc_parent;        //Red Mark
   proc_thread->sz = proc_parent->sz;
   
+
+  // New Child Trap Frame
+  *proc_thread->tf = *proc_parent->tf; 
+  proc_thread->tf->eax = proc_thread->pid;
+  proc_thread->tf->ebp = (int) ustack - 4; //Red Mark
+  proc_thread->tf->esp = (int) ustack - 4; //Red Mark 
+  proc_thread->tf->eip = (int) function; 
+
+
+  // new user stack
+  *ustack = (int) arg;
+  *(ustack - 1) = 0xffffffff;
+  *(ustack - 2) = 0xffffffff;
 
   for(i = 0; i < NOFILE; i++)
     if(proc_parent->ofile[i])
