@@ -225,36 +225,39 @@ int clone(void(*function)(void *, void *), void *arg1, void *arg2, void *stack){
   int i, pid;
   struct proc *proc_thread;
   struct proc *proc_parent = myproc();
+  uint u_stack = (uint)stack + PGSIZE - 12;  
   
   if((proc_thread = allocproc()) == 0){
     return -1;
   }
     
-  proc_thread->ustack = (char *)stack;
-  proc_thread->pgdir = proc_parent->pgdir;
-  proc_thread->parent = proc_parent;        //Red Mark
+  proc_thread->pgdir = proc_parent->pgdir;  
+  proc_thread->parent = proc_parent;           
+  *proc_thread->tf = *proc_parent->tf; 
+  
+  uint ustack_array[3];
+  ustack_array[0] = 0xffffffff;
+  ustack_array[1] = (uint) arg1;
+  ustack_array[2] = (uint) arg2;
+  proc_thread->ustack = stack;
+
+  if (copyout(proc_thread->pgdir, u_stack, ustack_array, 12) < 0)
+    return -1;
+
   proc_thread->sz = proc_parent->sz;
   
+  proc_thread->tf->eax = 0;  
+  proc_thread->tf->ebp = (uint) u_stack; 
+  proc_thread->tf->esp = (uint) u_stack; 
+  proc_thread->tf->eip = (uint) function; 
 
-  // New Child Trap Frame
-  *proc_thread->tf = *proc_parent->tf; 
-  proc_thread->tf->eax = proc_thread->pid;
-  proc_thread->tf->ebp = (int) ustack - 4; //Red Mark
-  proc_thread->tf->esp = (int) ustack - 4; //Red Mark 
-  proc_thread->tf->eip = (int) function; 
-
-
-  // new user stack
-  *ustack = (int) arg;
-  *(ustack - 1) = 0xffffffff;
-  *(ustack - 2) = 0xffffffff;
 
   for(i = 0; i < NOFILE; i++)
     if(proc_parent->ofile[i])
       proc_thread->ofile[i] = filedup(proc_parent->ofile[i]);
   proc_thread->cwd = idup(proc_parent->cwd);
 
-  safestrcpy(proc_parent->name, proc_thread->name, sizeof(proc_thread->name));
+  safestrcpy(proc_thread->name, proc_parent->name, sizeof(proc_parent->name));
   pid = proc_thread->pid;
   acquire(&ptable.lock);
   proc_thread->state = RUNNABLE;
