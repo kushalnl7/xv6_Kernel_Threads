@@ -22,6 +22,7 @@ int main(int argc, char *argv[]){
         }
         clone(&clone_fcn, (void*)a, (void*)b, stack);
         join(stack[i]);
+        free(stack[i]);
     }
     // for(int i = 0; i < 5; i++){
     //     join(stack[i]);
