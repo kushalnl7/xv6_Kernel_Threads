@@ -211,6 +211,7 @@ fork(void)
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
   pid = np->pid;
+  np->tgid = np->pid;   ////Red Mark
 
   acquire(&ptable.lock);
 
@@ -221,21 +222,53 @@ fork(void)
   return pid;
 }
 
-int clone(void(*function)(void *, void *), void *arg1, void *arg2, void *stack){
+int clone(void(*function)(void *, void *), void *arg1, void *arg2, void *stack, void *flag_count, void *flags){
   int i, pid;
   struct proc *proc_thread;
   struct proc *proc_parent = myproc();
   uint u_stack = (uint)stack + PGSIZE - 12;  
   
+  cprintf("%d %d %d\n", ((int*)flags)[0], ((int*)(flags))[1], ((int*)(flags))[2]);
+
   if((proc_thread = allocproc()) == 0){
     return -1;
   }
   
+  // proc_thread->tgid = proc_parent->pid;   ////Red Mark
+  // proc_thread->parent = proc_parent;           
+
+  if(((int*)(flags))[CLONE_THREAD] == 1){
+    proc_thread->tgid = proc_parent->tgid;
+  }
+  else{
+    proc_thread->tgid = proc_thread->pid;
+  }
+
+  if(((int*)(flags))[CLONE_PARENT] == 1){
+    cprintf("%d \n",((int*)(flags))[CLONE_PARENT]);
+    proc_thread->parent = proc_parent->parent;
+  }
+  else{
+    proc_thread->parent = proc_parent; 
+  }
+
+  if(((int*)(flags))[CLONE_VM] == 1){
+    proc_thread->pgdir = proc_parent->pgdir;  
+    
+  }
+  else{
+    if((proc_thread->pgdir = copyuvm(proc_parent->pgdir, proc_parent->sz)) == 0){
+      kfree(proc_thread->kstack);
+      proc_thread->kstack = 0;
+      proc_thread->state = UNUSED;
+      return -1;
+    }
+  }
+
   proc_thread->thread_flag = 1;
-  proc_thread->pgdir = proc_parent->pgdir;  
-  proc_thread->parent = proc_parent;           
   *proc_thread->tf = *proc_parent->tf; 
-  
+  // proc_thread->pgdir = proc_parent->pgdir;  
+    
   uint ustack_array[3];
   ustack_array[0] = 0xffffffff;
   ustack_array[1] = (uint) arg1;

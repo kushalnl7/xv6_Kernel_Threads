@@ -1,3 +1,7 @@
+#define CLONE_THREAD 0
+#define CLONE_PARENT 1
+#define CLONE_VM 2
+
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -51,6 +55,7 @@ struct proc {
   char name[16];               // Process name (debugging)
   char *ustack;
   int thread_flag;
+  int tgid;
 };
 
 // Process memory is laid out contiguously, low addresses first:

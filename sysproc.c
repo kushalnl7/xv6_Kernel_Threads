@@ -97,6 +97,8 @@ sys_clone(void)
     void *arg1;
     void *arg2;
     void *stack;
+    void *flag_count;
+    void *flags;
 
     if(argptr(0, (void *) &function, sizeof(void*)) < 0)
         return -1;
@@ -110,7 +112,18 @@ sys_clone(void)
     if(argptr(3, (void *) &stack, sizeof(void*)) < 0)
         return -1;
 
-    return clone(function, arg1, arg2, stack);
+    if(argptr(4, (void *) &flag_count, sizeof(void*)) < 0)
+        return -1;
+
+    if(argptr(5, (void *) &flags, sizeof(void*)) < 0)
+        return -1;    
+
+    // void flags_arr[(int)flag_count];
+    // for(int i = 0; i < (int)flag_count, i++){
+    //   flags_arr[i] = *(flags+i);
+    // }
+
+    return clone(function, arg1, arg2, stack, flag_count, flags);
 }
 
 int
@@ -121,4 +134,16 @@ sys_join(void)
     return -1;
 
   return join(stack);
+}
+
+int
+sys_getppid(void)
+{
+  return myproc()->parent->pid;
+}
+
+int
+sys_gettid(void)
+{
+  return myproc()->pid;
 }
