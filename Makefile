@@ -287,6 +287,5 @@ tar:
 .PHONY: dist-test dist
 
 run:
-	chmod +x testing.sh
-	./testing.sh
+	make && echo "./clone" | make qemu
 	
