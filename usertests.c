@@ -1425,7 +1425,7 @@ clonetest(void){
   *(flags + CLONE_THREAD) = 0;
   *(flags + CLONE_PARENT) = 0;
   *(flags + CLONE_VM) = 1;
-  *(flags + CLONE_FS) = 0;
+  *(flags + CLONE_FILES) = 0;
   int pids[100], a = 5, b = 10, i;
   for(i = 0; i < 60; i++){
       pids[i] = thread_create(&clone_fcn, (void*)a, (void*)b, (void*)flag_count, (void*)flags);
