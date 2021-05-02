@@ -1,6 +1,9 @@
 #define CLONE_THREAD 0
 #define CLONE_PARENT 1
 #define CLONE_VM 2
+#define CLONE_FS 3
+#define CLONE_FILES 4
+
 
 // Per-CPU state
 struct cpu {

@@ -24,9 +24,11 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int clone(void(*)(void*, void*), void*, void*, void*, void*, void*);
-int join(void**);
+int join(int);
 int getppid(void);
 int gettid(void);
+int gettgid(void);
+int tgkill(int, int, int);
 
 // ulib.c
 int stat(const char*, struct stat*);

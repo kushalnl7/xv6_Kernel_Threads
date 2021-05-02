@@ -7,6 +7,7 @@
 #include "syscall.h"
 #include "traps.h"
 #include "memlayout.h"
+#include "threads.h"
 
 char buf[8192];
 char name[3];
@@ -1412,6 +1413,32 @@ forktest(void)
 }
 
 void
+clone_fcn(void *a, void *b){
+  exit();
+}
+
+void
+clonetest(void){
+  int flag_count = 4;
+  int *flags;
+  flags = malloc(flag_count*sizeof(int));
+  *(flags + CLONE_THREAD) = 0;
+  *(flags + CLONE_PARENT) = 0;
+  *(flags + CLONE_VM) = 1;
+  *(flags + CLONE_FS) = 0;
+  int pids[100], a = 5, b = 10, i;
+  for(i = 0; i < 60; i++){
+      pids[i] = thread_create(&clone_fcn, (void*)a, (void*)b, (void*)flag_count, (void*)flags);
+  }
+  for(i = 0; i < 60; i++){
+      join(pids[i]);
+  }
+  if(i == 60){
+    printf(1, "Clone test passed\n");
+  }
+}
+
+void
 sbrktest(void)
 {
   int fds[2], pid, pids[10], ppid;
@@ -1793,6 +1820,7 @@ main(int argc, char *argv[])
   dirfile();
   iref();
   forktest();
+  clonetest();
   bigdir(); // slow
 
   uio();

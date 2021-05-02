@@ -228,7 +228,7 @@ int clone(void(*function)(void *, void *), void *arg1, void *arg2, void *stack, 
   struct proc *proc_parent = myproc();
   uint u_stack = (uint)stack + PGSIZE - 12;  
   
-  cprintf("%d %d %d\n", ((int*)flags)[0], ((int*)(flags))[1], ((int*)(flags))[2]);
+  // cprintf("%d %d %d\n", ((int*)flags)[0], ((int*)(flags))[1], ((int*)(flags))[2]);
 
   if((proc_thread = allocproc()) == 0){
     return -1;
@@ -245,7 +245,6 @@ int clone(void(*function)(void *, void *), void *arg1, void *arg2, void *stack, 
   }
 
   if(((int*)(flags))[CLONE_PARENT] == 1){
-    cprintf("%d \n",((int*)(flags))[CLONE_PARENT]);
     proc_thread->parent = proc_parent->parent;
   }
   else{
@@ -286,9 +285,16 @@ int clone(void(*function)(void *, void *), void *arg1, void *arg2, void *stack, 
   proc_thread->tf->eip = (uint) function; 
 
 
-  for(i = 0; i < NOFILE; i++)
-    if(proc_parent->ofile[i])
-      proc_thread->ofile[i] = filedup(proc_parent->ofile[i]);
+  if(((int*)(flags))[CLONE_FS] == 1){
+    for(i = 0; i < NOFILE; i++)
+      if(proc_parent->ofile[i])
+        proc_thread->ofile[i] = (proc_parent->ofile[i]);
+  }
+  else{
+    for(i = 0; i < NOFILE; i++)
+      if(proc_parent->ofile[i])
+        proc_thread->ofile[i] = filedup(proc_parent->ofile[i]);
+  }
   proc_thread->cwd = idup(proc_parent->cwd);
 
   safestrcpy(proc_thread->name, proc_parent->name, sizeof(proc_parent->name));
@@ -392,7 +398,7 @@ wait(void)
 }
 
 int
-join(void **stack)
+join(int tid)
 {
   struct proc *p;
   int havekids, pid;
@@ -406,8 +412,10 @@ join(void **stack)
       if(p->thread_flag == 1){
         if(p->parent != curproc)
           continue;
+        // else if(p->parent != curproc->parent)
+        //   continue; 
         havekids = 1;
-        if(p->state == ZOMBIE){
+        if(p->state == ZOMBIE && p->pid == tid){
           // Found one.
           pid = p->pid;
           kfree(p->kstack);
@@ -608,6 +616,26 @@ kill(int pid)
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == pid){
+      p->killed = 1;
+      // Wake process from sleep if necessary.
+      if(p->state == SLEEPING)
+        p->state = RUNNABLE;
+      release(&ptable.lock);
+      return 0;
+    }
+  }
+  release(&ptable.lock);
+  return -1;
+}
+
+int
+tgkill(int tid, int tgid, int signal)
+{
+  struct proc *p;
+
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->pid == tid && p->tgid == tgid){
       p->killed = 1;
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING)

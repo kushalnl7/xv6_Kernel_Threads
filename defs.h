@@ -107,6 +107,7 @@ int             cpuid(void);
 void            exit(void);
 int             fork(void);
 int             clone(void(*)(void *, void *), void*, void *, void *, void *, void *);
+int             tgkill(int, int, int);
 int             growproc(int);
 int             kill(int);
 struct cpu*     mycpu(void);
@@ -119,7 +120,7 @@ void            setproc(struct proc*);
 void            sleep(void*, struct spinlock*);
 void            userinit(void);
 int             wait(void);
-int             join(void **);
+int             join(int);
 void            wakeup(void*);
 void            yield(void);
 

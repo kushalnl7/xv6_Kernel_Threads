@@ -129,11 +129,12 @@ sys_clone(void)
 int
 sys_join(void)
 {
-  void **stack;
-  if(argptr(0, (void*)&stack, sizeof(void*)) < 0)
+  // void **stack;
+  int tid;
+  if(argint(0, &tid) < 0)
     return -1;
 
-  return join(stack);
+  return join(tid);
 }
 
 int
@@ -146,4 +147,27 @@ int
 sys_gettid(void)
 {
   return myproc()->pid;
+}
+
+int
+sys_gettgid(void)
+{
+  return myproc()->tgid;
+}
+
+int
+sys_tgkill(void)
+{
+  int tid;
+  int tgid;
+  int signal;
+
+  if(argint(0, &tid) < 0)
+    return -1;
+  if(argint(1, &tgid) < 0)
+    return -1;
+  if(argint(2, &signal) < 0)
+    return -1;
+
+  return tgkill(tid, tgid, signal);
 }
