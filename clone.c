@@ -39,10 +39,6 @@ void matmul(void *arg1, void *arg2){
     exit();
 }
 
-// void F6(void *arg1, void *arg2){
-//     exit();
-// }
-
 void F5(void *arg1, void *arg2){
     char *exec_arr[] = {"cat", "README"};
     int pid = fork();
@@ -80,7 +76,7 @@ void F2(void *arg1, void *arg2){
     flags = malloc(flag_count*sizeof(int));
     *(flags + CLONE_THREAD) = 0;
     *(flags + CLONE_PARENT) = 0;
-    *(flags + CLONE_VM) = 1;
+    *(flags + CLONE_VM) = 0;
     *(flags + CLONE_FS) = 0;
     int pid = thread_create(&F3, (void*)a, (void*)b, (void*)flag_count, (void*)flags);
     thread_join(pid);
@@ -99,14 +95,17 @@ int main(int argc, char *argv[]){
     char c[50] = "This is F2 clone function and my arg 2 is";
     char d[100] = "This is F4 clone function and I would not be able to print arg 2 as I will be killed";
     char e[100] = "This is F5 clone function and we are doing matrix multiplication here";
+    char f[100] = "This is F1 clone function and we have set VM flag to 1 and my arg2 is";
+    char g[100] = "This is F1 clone function and we have set THREAD flag to 1 and my arg2 is";
+    char h[100] = "This is F1 clone function and we have set VM flag and THREAD flag to 1 and my arg2 is";
     int b = 10;
     int flag_count = 4;
     int *flags;
     flags = malloc(flag_count*sizeof(int));
     *(flags + CLONE_THREAD) = 0;
     *(flags + CLONE_PARENT) = 0;
-    *(flags + CLONE_VM) = 1;
-    *(flags + CLONE_FS) = 0;
+    *(flags + CLONE_VM) = 0;
+    *(flags + CLONE_FILES) = 0;
 
     printf(1, "\n\n_________CLONE JOIN TESTING_________\n\n");
     int pid = thread_create(&F1, (void*)a, (void*)b, (void*)flag_count, (void*)flags);
@@ -120,16 +119,30 @@ int main(int argc, char *argv[]){
     pid = thread_create(&F4, (void*)d, (void*)b, (void*)flag_count, (void*)flags);
     thread_join(pid);
 
-    printf(1, "\n\n_________FORK INSIDE CLONE TESTING_________\n\n");
+    printf(1, "\n\n_________FORK-EXEC INSIDE CLONE TESTING_________\n\n");
     pid = thread_create(&F5, (void*)d, (void*)b, (void*)flag_count, (void*)flags);
     thread_join(pid);
 
-    // printf(1, "\n\n_________EXEC INSIDE CLONE TESTING_________\n\n");
-    // pid = thread_create(&F6, (void*)d, (void*)b, (void*)flag_count, (void*)flags);
-    // thread_join(pid);
+    printf(1, "\n\n_________CLONE_VM FLAG TESTING_________\n\n");
+    *(flags + CLONE_VM) = 1;
+    pid = thread_create(&F1, (void*)f, (void*)b, (void*)flag_count, (void*)flags);
+    thread_join(pid);
+
+    printf(1, "\n\n_________CLONE_THREAD FLAG TESTING_________\n\n");
+    *(flags + CLONE_VM) = 0;
+    *(flags + CLONE_THREAD) = 1;
+    pid = thread_create(&F1, (void*)g, (void*)b, (void*)flag_count, (void*)flags);
+    thread_join(pid);
+
+    printf(1, "\n\n_________CLONE_THREAD and CLONE_VM FLAG TESTING_________\n\n");
+    *(flags + CLONE_VM) = 1;
+    *(flags + CLONE_THREAD) = 1;
+    pid = thread_create(&F1, (void*)h, (void*)b, (void*)flag_count, (void*)flags);
+    thread_join(pid);
     
     printf(1, "\n\n_________MATRIX MULTIPLICATION USING CLONE TESTING_________\n\n");
     int pid_matmul[3];
+    *(flags + CLONE_VM) = 1;
     for (int i = 0; i < 3; i++){  
         pid_matmul[i] = thread_create(&matmul, (void*)e, (void*)b, (void*)flag_count, (void*)flags); 
     } 
@@ -151,30 +164,5 @@ int main(int argc, char *argv[]){
     for(int i = 0; i < 60; i++){
         join(pids[i]);
     }
-
- 
-
-
-    // wait();
-    // printf(1, "%d\n", pid);
-    
-    // void *stack[5];
-    // for(int i = 0; i < 5; i++){
-    //     stack[i] = malloc(4096);
-    //     if(!stack[i]){
-    //         printf(1, "Memory alloction failed!\n");
-    //         exit();
-    //     }
-    //     int pid = clone(&clone_fcn, (void*)a, (void*)b, stack);
-    //     printf(1, "%d\n", pid);
-    //     printf(1, "%d\n", gettid());
-    //     printf(1, "%d\n", getppid());
-    //     join(stack[i]);
-    //     free(stack[i]);
-    // }
-    // for(int i = 0; i < 5; i++){
-    //     join(stack[i]);
-    // }
-    // wait();
     exit();
 }

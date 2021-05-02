@@ -1,8 +1,8 @@
 #define CLONE_THREAD 0
 #define CLONE_PARENT 1
 #define CLONE_VM 2
-#define CLONE_FS 3
-#define CLONE_FILES 4
+#define CLONE_FILES 3
+#define CLONE_FS 4
 
 
 // Per-CPU state
@@ -59,6 +59,7 @@ struct proc {
   char *ustack;
   int thread_flag;
   int tgid;
+  int parent_flag;
 };
 
 // Process memory is laid out contiguously, low addresses first:

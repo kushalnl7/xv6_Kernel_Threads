@@ -245,9 +245,11 @@ int clone(void(*function)(void *, void *), void *arg1, void *arg2, void *stack, 
   }
 
   if(((int*)(flags))[CLONE_PARENT] == 1){
+    proc_thread->parent_flag = 1;
     proc_thread->parent = proc_parent->parent;
   }
   else{
+    proc_thread->parent_flag = 0;
     proc_thread->parent = proc_parent; 
   }
 
@@ -285,10 +287,10 @@ int clone(void(*function)(void *, void *), void *arg1, void *arg2, void *stack, 
   proc_thread->tf->eip = (uint) function; 
 
 
-  if(((int*)(flags))[CLONE_FS] == 1){
+  if(((int*)(flags))[CLONE_FILES] == 1){
     for(i = 0; i < NOFILE; i++)
       if(proc_parent->ofile[i])
-        proc_thread->ofile[i] = (proc_parent->ofile[i]);
+        proc_thread->ofile[i] = proc_parent->ofile[i];
   }
   else{
     for(i = 0; i < NOFILE; i++)
@@ -410,8 +412,14 @@ join(int tid)
     havekids = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->thread_flag == 1){
-        if(p->parent != curproc)
+        if(p->parent_flag == 1){
+          if(p->parent != curproc->parent)
           continue;
+        }
+        else{
+          if(p->parent != curproc)
+            continue;
+        }
         // else if(p->parent != curproc->parent)
         //   continue; 
         havekids = 1;
