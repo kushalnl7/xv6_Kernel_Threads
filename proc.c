@@ -228,7 +228,6 @@ int clone(void(*function)(void *, void *), void *arg1, void *arg2, void *stack, 
   struct proc *proc_parent = myproc();
   uint u_stack = (uint)stack + PGSIZE - 12;  
   
-  // cprintf("%d %d %d\n", ((int*)flags)[0], ((int*)(flags))[1], ((int*)(flags))[2]);
 
   if((proc_thread = allocproc()) == 0){
     return -1;
